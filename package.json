@@ -1,0 +1,11 @@
+{
+  "name": "citiesapp",
+  "version": "1.0.0",
+  "description": "vanilla js, node, nginx, mysql, memcached toy solution to demonstrate dockerised crud architecture",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "keelan hassell",
+  "license": "MIT"
+}
