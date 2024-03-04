@@ -17,12 +17,12 @@ routes.post(
 );
 
 // Read Data
-routes.get("/posts", Controller.show_posts);
+routes.get("/posts", Controller.show_cities);
 routes.get(
     "/post/:id",
     [param("id", "Invalid post ID.").exists().isNumeric().toInt()],
     Controller.validation,
-    Controller.show_posts
+    Controller.show_cities
 );
 
 // Update Data
@@ -50,7 +50,7 @@ routes.put(
             .escape(),
     ],
     Controller.validation,
-    Controller.edit_post
+    Controller.edit_city
 );
 
 // Delete Data
