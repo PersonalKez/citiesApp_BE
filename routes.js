@@ -17,10 +17,10 @@ routes.post(
 );
 
 // Read Data
-routes.get("/posts", Controller.show_cities);
+routes.get("/cities", Controller.show_cities);
 routes.get(
-    "/post/:id",
-    [param("id", "Invalid post ID.").exists().isNumeric().toInt()],
+    "/city/:id",
+    [param("id", "Invalid city ID.").exists().isNumeric().toInt()],
     Controller.validation,
     Controller.show_cities
 );
@@ -29,7 +29,7 @@ routes.get(
 routes.put(
     "/edit",
     [
-        body("post_id", "Invalid post ID").isNumeric().toInt(),
+        body("city_id", "Invalid city ID").isNumeric().toInt(),
         body("date", "Must not be empty.")
             .optional()
             .trim()
@@ -57,13 +57,13 @@ routes.put(
 routes.delete(
     "/delete",
     [
-        body("post_id", "Please provide a valid post ID.")
+        body("city_id", "Please provide a valid city ID.")
             .exists()
             .isNumeric()
             .toInt(),
     ],
     Controller.validation,
-    Controller.delete_post
+    Controller.delete_city
 );
 
 export default routes;

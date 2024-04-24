@@ -93,7 +93,7 @@ class Controller {
         }
     };
 
-    static delete_post = async (req, res, next) => {
+    static delete_city = async (req, res, next) => {
         try {
             const [result] = await DB.execute(
                 "DELETE FROM `cities` WHERE `id`=?",
