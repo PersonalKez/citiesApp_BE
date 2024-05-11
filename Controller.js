@@ -2,11 +2,15 @@ import { validationResult, matchedData } from "express-validator";
 import DB from "./database.js";
 
 const validation_result = validationResult.withDefaults({
-    formatter: (error) => error.msg,
+    formatter: (error) => console.log(error.msg)
 });
 
 class Controller {
     static validation = (req, res, next) => {
+        // Handle the POST request here
+        const data = req.body;
+        // Send a response back to the client
+        console.log(data)
         const errors = validation_result(req).mapped();
         if (Object.keys(errors).length) {
             return res.status(422).json({
@@ -37,24 +41,21 @@ class Controller {
     };
 
     static show_cities = async (req, res, next) => {
+        console.log("Showing Cities!");
         try {
             let sql = "SELECT * FROM `cities`";
-            if (req.params.id) {
-                sql = `SELECT * FROM cities WHERE id=${req.params.id}`;
-            }
             const [row] = await DB.query(sql);
-            if (row.length === 0 && req.params.id) {
+            if (row.length === 0) {
                 return res.status(404).json({
                     ok: 0,
                     status: 404,
-                    message: "Invalid post ID.",
+                    message: "No cities to return.",
                 });
             }
-            const post = req.params.id ? { post: row[0] } : { posts: row };
             res.status(200).json({
                 ok: 1,
                 status: 200,
-                ...post,
+                cities: row,
             });
         } catch (e) {
             next(e);
@@ -64,24 +65,26 @@ class Controller {
     static edit_city = async (req, res, next) => {
         try {
             const data = matchedData(req);
-            const [row] = await DB.query("SELECT * FROM `cities` WHERE `id`=?", [
-                data.post_id,
+            const [row] = await DB.query("SELECT * FROM `cities` WHERE `city_name`=?", [
+                data.city_name,
             ]);
 
             if (row.length !== 1) {
                 return res.json({
                     ok: 0,
                     statu: 404,
-                    message: "Invalid post ID.",
+                    message: "No cities of that name.",
                 });
             }
+            console.log("Data is:" + JSON.stringify(data))
             const post = row[0];
             const date = data.date || post.date;
             const city_name = data.city_name || post.city_name;
             const country = data.country || post.country;
+            const new_city_name = data.new_city_name || city_name;
             await DB.execute(
-                "UPDATE `cities` SET `date`=?, `city_name`=?,`country`=? WHERE `id`=?",
-                [date, city_name, country, data.id]
+                "UPDATE `cities` SET `date`=?, `city_name`=?,`country`=? WHERE `city_name`=?",
+                [date, new_city_name, country, city_name]
             );
             res.json({
                 ok: 1,
@@ -94,10 +97,12 @@ class Controller {
     };
 
     static delete_city = async (req, res, next) => {
+        console.log("GOT HERE")
+        console.log(req.params.city_name)
         try {
             const [result] = await DB.execute(
-                "DELETE FROM `cities` WHERE `id`=?",
-                [req.body.post_id]
+                "DELETE FROM `cities` WHERE `city_name`=?",
+                [req.params.city_name]
             );
             if (result.affectedRows) {
                 return res.json({
@@ -109,7 +114,7 @@ class Controller {
             res.status(404).json({
                 ok: 0,
                 status: 404,
-                message: "Invalid city ID.",
+                message: "Invalid city name.",
             });
         } catch (e) {
             next(e);

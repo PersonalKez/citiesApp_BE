@@ -8,9 +8,9 @@ const routes = Router({ strict: true });
 routes.post(
     "/create",
     [
-        body("date", "Must not be empty.").trim().not().isEmpty().escape(),
         body("city_name", "Must not be empty.").trim().not().isEmpty().escape(),
         body("country", "Must not be empty.").trim().not().isEmpty().escape(),
+        body("date", "Must not be empty.").trim().not().isEmpty().escape(),
     ],
     Controller.validation,
     Controller.create
@@ -20,7 +20,7 @@ routes.post(
 routes.get("/cities", Controller.show_cities);
 routes.get(
     "/city/:id",
-    [param("id", "Invalid city ID.").exists().isNumeric().toInt()],
+    [param("id", "Invalid city ID.").exists()],
     Controller.validation,
     Controller.show_cities
 );
@@ -29,7 +29,6 @@ routes.get(
 routes.put(
     "/edit",
     [
-        body("city_id", "Invalid city ID").isNumeric().toInt(),
         body("date", "Must not be empty.")
             .optional()
             .trim()
@@ -48,6 +47,12 @@ routes.put(
             .not()
             .isEmpty()
             .escape(),
+        body("new_city_name", "Must not be empty.")
+            .optional()
+            .trim()
+            .not()
+            .isEmpty()
+            .escape(),
     ],
     Controller.validation,
     Controller.edit_city
@@ -55,12 +60,9 @@ routes.put(
 
 // Delete Data
 routes.delete(
-    "/delete",
+    "/delete/:city_name",
     [
-        body("city_id", "Please provide a valid city ID.")
-            .exists()
-            .isNumeric()
-            .toInt(),
+        [param("city_name", "Invalid city ID.").exists()],
     ],
     Controller.validation,
     Controller.delete_city
