@@ -5,6 +5,7 @@ const connection = mysql.createPool({
     user: "root",
     password: "dev",
     database: "cities",
+    timezone: "+00:00"
   });
 
 export default connection.promise();

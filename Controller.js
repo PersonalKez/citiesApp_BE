@@ -1,9 +1,69 @@
 import { validationResult, matchedData } from "express-validator";
 import DB from "./database.js";
+import { memcached } from "./app.js";
+import { promisify } from "util";
+
+
+// helpers here
+
+    // validation
 
 const validation_result = validationResult.withDefaults({
     formatter: (error) => console.log(error.msg)
 });
+
+    // memcached stuff
+
+function add_city_to_cache(city_name, country, date){
+    memcached.add(city_name, {"city_name": city_name, "country": country, "date": date}, 60);
+    memcached.get("set_of_all", (e, data) => {
+        if(e)console.log(e);
+        let cities = []
+        if(data != (null || undefined)){
+            cities = JSON.parse(data);
+        }
+        else return;
+        cities.push({"city_name": city_name, "country": country, "date": date});
+        memcached.set("set_of_all", JSON.stringify(cities), 60, e => console.log(e));
+    })
+    return;
+}
+
+function replace_city_in_cache(city_name, new_city_name, country, date){
+    memcached.del(city_name);
+    memcached.add(new_city_name, {"city_name": new_city_name, "country": country, "date": date}, 60)
+    memcached.get("set_of_all", (e, data) => {
+        if(e)console.log(e);
+        let deserialised_data = []
+        console.log("CACHE HERE")
+        if(!data)return;
+        deserialised_data = data? JSON.parse(data) : [];
+        console.log(deserialised_data);
+        deserialised_data.filter(obj => {obj.city_name !== city_name}); 
+        console.log(deserialised_data);
+        deserialised_data.push({"city_name": new_city_name, "country": country, "date": date});
+        console.log(deserialised_data);
+        memcached.set("set_of_all", JSON.stringify(deserialised_data), 60);
+    })
+    return;
+}
+
+function remove_from_cache(city_name){
+    memcached.del(city_name);
+    memcached.get("set_of_all", (e, data) => {
+        if(e)console.log(e);
+        let deserialised_data = [];
+        if(!data)return;
+        deserialised_data = data? JSON.parse(data) : [];
+        console.log("AAAAAAAAAADWTFWRSGFTRGFRB GFRFGFRDE")
+        console.log(data);
+        deserialised_data.filter(obj => {obj.city_name !== city_name});
+        console.log(deserialised_data);
+        memcached.set("set_of_all", JSON.stringify(deserialised_data), 60);
+    })
+}
+
+    // main Controller
 
 class Controller {
     static validation = (req, res, next) => {
@@ -29,6 +89,7 @@ class Controller {
                 "INSERT INTO `cities` (`date`,`city_name`,`country`) VALUES (?,?,?)",
                 [date, city_name, country]
             );
+            add_city_to_cache(city_name, country, date);
             res.status(201).json({
                 ok: 1,
                 status: 201,
@@ -43,19 +104,32 @@ class Controller {
     static show_cities = async (req, res, next) => {
         console.log("Showing Cities!");
         try {
-            let sql = "SELECT * FROM `cities`";
-            const [row] = await DB.query(sql);
-            if (row.length === 0) {
+            let cities = [];
+            const get_data_promise = promisify(memcached.get.bind(memcached));
+            let data = await get_data_promise("set_of_all");
+            data? cities = JSON.parse(data) : [];
+            console.log(cities);
+            if (cities.length === 0){
+                console.log("not cached, falling back to db");
+                let sql = "SELECT * FROM `cities`";
+                [cities] = await DB.query(sql);
+                if(cities.length !==0){
+                    cities.forEach((el) => {
+                    add_city_to_cache(el.city_name, el.country, el.date);
+                })
+                }
+            }
+            if (cities.length === 0) {
                 return res.status(404).json({
                     ok: 0,
                     status: 404,
                     message: "No cities to return.",
                 });
-            }
+                } 
             res.status(200).json({
                 ok: 1,
                 status: 200,
-                cities: row,
+                cities: cities,
             });
         } catch (e) {
             next(e);
@@ -86,6 +160,7 @@ class Controller {
                 "UPDATE `cities` SET `date`=?, `city_name`=?,`country`=? WHERE `city_name`=?",
                 [date, new_city_name, country, city_name]
             );
+            replace_city_in_cache(city_name, new_city_name, country, date);
             res.json({
                 ok: 1,
                 status: 200,
@@ -97,14 +172,15 @@ class Controller {
     };
 
     static delete_city = async (req, res, next) => {
-        console.log("GOT HERE")
-        console.log(req.params.city_name)
+        console.log("DELETING");
+        console.log(req.params.city_name);
         try {
             const [result] = await DB.execute(
                 "DELETE FROM `cities` WHERE `city_name`=?",
                 [req.params.city_name]
             );
             if (result.affectedRows) {
+                remove_from_cache(req.params.city_name);
                 return res.json({
                     ok: 1,
                     status: 200,

@@ -18,12 +18,7 @@ routes.post(
 
 // Read Data
 routes.get("/cities", Controller.show_cities);
-routes.get(
-    "/city/:id",
-    [param("id", "Invalid city ID.").exists()],
-    Controller.validation,
-    Controller.show_cities
-);
+
 
 // Update Data
 routes.put(

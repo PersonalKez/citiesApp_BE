@@ -1,8 +1,9 @@
 import express from "express";
 import routes from "./routes.js";
 import cors from "cors";
-
+import Memcached from "memcached";
 const app = express();
+export const memcached = new Memcached('127.0.0.1', 11211);
 const PORT = 3000;
 app.use(express.json());
 app.use(cors());
