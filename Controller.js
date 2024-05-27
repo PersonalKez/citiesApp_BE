@@ -35,14 +35,10 @@ function replace_city_in_cache(city_name, new_city_name, country, date){
     memcached.get("set_of_all", (e, data) => {
         if(e)console.log(e);
         let deserialised_data = []
-        console.log("CACHE HERE")
         if(!data)return;
         deserialised_data = data? JSON.parse(data) : [];
-        console.log(deserialised_data);
         deserialised_data.filter(obj => {obj.city_name !== city_name}); 
-        console.log(deserialised_data);
         deserialised_data.push({"city_name": new_city_name, "country": country, "date": date});
-        console.log(deserialised_data);
         memcached.set("set_of_all", JSON.stringify(deserialised_data), 60);
     })
     return;
@@ -55,10 +51,7 @@ function remove_from_cache(city_name){
         let deserialised_data = [];
         if(!data)return;
         deserialised_data = data? JSON.parse(data) : [];
-        console.log("AAAAAAAAAADWTFWRSGFTRGFRB GFRFGFRDE")
-        console.log(data);
         deserialised_data.filter(obj => {obj.city_name !== city_name});
-        console.log(deserialised_data);
         memcached.set("set_of_all", JSON.stringify(deserialised_data), 60);
     })
 }
@@ -67,10 +60,6 @@ function remove_from_cache(city_name){
 
 class Controller {
     static validation = (req, res, next) => {
-        // Handle the POST request here
-        const data = req.body;
-        // Send a response back to the client
-        console.log(data)
         const errors = validation_result(req).mapped();
         if (Object.keys(errors).length) {
             return res.status(422).json({
@@ -108,9 +97,7 @@ class Controller {
             const get_data_promise = promisify(memcached.get.bind(memcached));
             let data = await get_data_promise("set_of_all");
             data? cities = JSON.parse(data) : [];
-            console.log(cities);
             if (cities.length === 0){
-                console.log("not cached, falling back to db");
                 let sql = "SELECT * FROM `cities`";
                 [cities] = await DB.query(sql);
                 if(cities.length !==0){
@@ -150,7 +137,6 @@ class Controller {
                     message: "No cities of that name.",
                 });
             }
-            console.log("Data is:" + JSON.stringify(data))
             const post = row[0];
             const date = data.date || post.date;
             const city_name = data.city_name || post.city_name;
@@ -172,8 +158,6 @@ class Controller {
     };
 
     static delete_city = async (req, res, next) => {
-        console.log("DELETING");
-        console.log(req.params.city_name);
         try {
             const [result] = await DB.execute(
                 "DELETE FROM `cities` WHERE `city_name`=?",
