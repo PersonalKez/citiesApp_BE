@@ -1,0 +1,2 @@
+FROM node:20.13.1
+EXPOSE 3000
