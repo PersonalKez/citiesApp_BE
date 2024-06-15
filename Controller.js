@@ -95,6 +95,7 @@ class Controller {
         try {
             let cities = [];
             console.log(memcached);
+            console.log("grabbing cache");
             const get_data_promise = promisify(memcached.get.bind(memcached));
             let data = await get_data_promise("set_of_all");
             data? cities = JSON.parse(data) : [];
