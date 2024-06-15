@@ -91,7 +91,7 @@ class Controller {
     };
 
     static show_cities = async (req, res, next) => {
-        console.log("Showing Cities!");
+        console.log("Showing all Cities!");
         try {
             let cities = [];
             console.log(memcached);
