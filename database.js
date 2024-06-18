@@ -1,7 +1,7 @@
 import mysql from "mysql2";
 
 const connection = mysql.createPool({
-    host: "localhost",
+    host: "mysql",
     user: "root",
     password: "dev",
     database: "cities",
